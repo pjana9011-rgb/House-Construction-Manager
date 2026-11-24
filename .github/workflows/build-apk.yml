@@ -1,3 +1,4 @@
+
 name: Build Android APK
 
 on:
@@ -20,17 +21,26 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Extract Android Project
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Extract Project
         run: |
           mkdir extracted
           unzip -q *.zip -d extracted
-          chmod +x $(find extracted -name gradlew -type f)
 
       - name: Build APK
         run: |
-          cd "$(dirname "$(find extracted -name gradlew -type f | head -1)")"
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          PROJECT=$(find extracted -name settings.gradle -printf '%h\n' | head -1)
+          gradle -p "$PROJECT" assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
